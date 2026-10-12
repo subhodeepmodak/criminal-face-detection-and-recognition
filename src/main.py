@@ -1,4 +1,10 @@
 import os
+import sys
+from pathlib import Path
+
+# Ensure src directory is available in sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 import cv2
 import random
 import warnings
@@ -24,6 +30,7 @@ def parse_args():
     parser.add_argument("--max-num", type=int, default=100, help="Maximum number of detected faces per frame")
     parser.add_argument("--log-level", type=str, default="INFO", help="Logging level")
     parser.add_argument("--save-video", type=str, default="output_video.mp4", help="Output path for the saved video")
+    parser.add_argument("--disable-telegram", action="store_true", help="Disable Telegram alert notifications")
     return parser.parse_args()
 
 # Set Device
@@ -92,8 +99,12 @@ def frame_processor(frame, detector, recognizer, targets, colors, params):
             if best_match_name not in detected_persons:
                 detected_persons[best_match_name] = current_time
                 message = f"CRIMINAL DETECTED: {best_match_name}"
-                send_message(message)
                 print(message)
+                if not getattr(params, "disable_telegram", False):
+                    try:
+                        send_message(message)
+                    except Exception as e:
+                        logging.warning(f"Could not send Telegram alert: {e}")
 
             if best_match_name not in best_detections or conf_score > best_detections[best_match_name][0]:
                 best_detections[best_match_name] = (conf_score, frame.copy())
@@ -144,9 +155,14 @@ def main(params):
         cv2.imwrite(frame_path, best_frame)
         print(f"Saved best frame for {name} (Confidence: {conf_score:.2f}) and a {frame_path}")
 
-    print(f"🎥 Output video saved to: {params.save_video}")
+    print(f"[Video] Output video saved to: {params.save_video}")
     
 if __name__ == "__main__":
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
     args = parse_args()
     if isinstance(args.source, str) and args.source.isdigit():
         args.source = int(args.source)

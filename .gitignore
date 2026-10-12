@@ -1,6 +1,30 @@
 # Ignore weights
 weights/*.onnx
 
+# Confidential datasets & personal face images
+faces/*.jpg
+faces/*.jpeg
+faces/*.png
+!faces/.gitkeep
+fine_tune/dataset/
+
+# Media & visual assets
+assets/*.mp4
+assets/*.gif
+assets/*.jpg
+assets/*.png
+!assets/.gitkeep
+
+# Runtime generated outputs
+/output_video.mp4
+/detected_*.jpg
+output/
+
+# Environment, tokens & subscribers data
+.env
+.env.local
+subscribers.pickle
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
